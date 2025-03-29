@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Replay Failed Calls</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        h1, h2 {
+            color: #444;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .menu {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+        .menu button {
+            background-color: #f0f0f0;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .menu button:hover {
+            background-color: #e0e0e0;
+        }
+        .menu .panel {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            z-index: 1000;
+        }
+        .menu .panel a {
+            display: block;
+            padding: 10px;
+            text-decoration: none;
+            color: #333;
+        }
+        .menu .panel a:hover {
+            background-color: #f0f0f0;
+        }
+        .success-message {
+            color: green;
+        }
+        .error-message {
+            color: red;
+        }
+        .accordion {
+            background-color: #f0f0f0;
+            color: #333;
+            cursor: pointer;
+            padding: 10px 20px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 16px;
+            transition: 0.4s;
+        }
+        .accordion:hover {
+            background-color: #e0e0e0;
+        }
+        .panel {
+            padding: 0 20px;
+            display: none;
+            background-color: #f9f9f9;
+            overflow: hidden;
+        }
+        .panel a {
+            display: block;
+            padding: 10px 0;
+            text-decoration: none;
+            color: #333;
+        }
+        .panel a:hover {
+            color: #007BFF;
+        }
+    </style>
+</head>
+<body>
+
+<div class="menu">
+    <button id="menuButton">☰</button>
+    <div class="panel" id="menuPanel">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
+<h1>Replay Failed API Calls</h1>
+
+<!-- Display success or failure message -->
+<div th:if="${message}" th:classappend="${message.contains('successful')} ? 'success-message' : 'error-message'" th:text="${message}"></div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Error ID</th>
+<!--                        <th>Payload</th> -->
+            <th th:if="${isAdmin}">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="error : ${errors}">
+            <td th:text="${error}">Error ID</td>
+<!--                        <td th:text="${failedCalls[error]}">Payload</td> -->
+            <td th:if="${isAdmin}">
+                <form th:action="@{/replay}" method="post">
+                    <input type="hidden" name="errorId" th:value="${error}" />
+                    <button type="submit">Replay</button>
+                </form>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+    const acc = document.querySelectorAll(".accordion");
+    acc.forEach(button => {
+        button.addEventListener("click", function () {
+            this.classList.toggle("active");
+            const panel = this.nextElementSibling;
+            if (panel.style.display === "block") {
+                panel.style.display = "none";
+            } else {
+                panel.style.display = "block";
+            }
+        });
+    });
+
+    const menuButton = document.getElementById("menuButton");
+    const menuPanel = document.getElementById("menuPanel");
+
+    menuButton.addEventListener("click", () => {
+        if (menuPanel.style.display === "block") {
+            menuPanel.style.display = "none";
+        } else {
+            menuPanel.style.display = "block";
+        }
+    });
+
+    window.addEventListener("click", (event) => {
+        if (!menuButton.contains(event.target) && !menuPanel.contains(event.target)) {
+            menuPanel.style.display = "none";
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        h1, h2 {
+            color: #444;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .stats div {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        #chart-container {
+            width: 80%; /* Adjust width to be responsive */
+            max-width: 800px; /* Set a maximum width */
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        @media (max-width: 768px) {
+            #chart-container {
+                width: 100%; /* Full width for smaller screens */
+            }
+            table {
+                font-size: 12px; /* Adjust font size for smaller screens */
+            }
+        }
+        .navigation {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .navigation a {
+            padding: 10px 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #000;
+            background-color: #f0f0f0;
+        }
+        .menu {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+        .menu button {
+            background-color: #f0f0f0;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .menu button:hover {
+            background-color: #e0e0e0;
+        }
+        .menu .panel {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            z-index: 1000;
+        }
+        .menu .panel a {
+            display: inline-block; /* Ensure links are displayed in a single line */
+            padding: 10px;
+            text-decoration: none;
+            color: #333;
+        }
+        .menu .panel a:hover {
+            background-color: #f0f0f0;
+        }
+        .accordion {
+            background-color: #f0f0f0;
+            color: #333;
+            cursor: pointer;
+            padding: 10px 20px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 16px;
+            transition: 0.4s;
+        }
+        .accordion:hover {
+            background-color: #e0e0e0;
+        }
+        .panel {
+            padding: 0 20px;
+            display: none;
+            background-color: #f9f9f9;
+            overflow: hidden;
+        }
+        .panel a {
+            display: block;
+            padding: 10px 0;
+            text-decoration: none;
+            color: #333;
+        }
+        .panel a:hover {
+            color: #007BFF;
+        }
+    </style>
+</head>
+<body>
+<div class="menu">
+    <button id="menuButton">☰</button>
+    <div class="panel" id="menuPanel">
+        <a href="/replay">View&nbsp;Errors</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+
+<h1>Retry/Replay Dashboard</h1>
+
+<h2>Retry and Replay Statistics</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Metric</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Total Retries</td>
+            <td th:text="${retryCount}">0</td>
+        </tr>
+        <tr>
+            <td>Total Replays</td>
+            <td th:text="${replayCount}">0</td>
+        </tr>
+        <tr>
+            <td>Successful API Calls</td>
+            <td th:text="${successfulApiCallCount}">0</td>
+        </tr>
+        <tr>
+            <td>Failed Calls</td>
+            <td th:text="${#lists.size(failedCalls)}">0</td>
+        </tr>
+    </tbody>
+</table>
+
+<div id="chart-container">
+    <canvas id="retryReplayChart"></canvas>
+</div>
+
+<p th:if="${retryCount == 0 && replayCount == 0 && #lists.size(failedCalls) == 0 && successfulApiCallCount == 0}" style="text-align: center; color: red;">No data available to display.</p>
+
+<script th:inline="javascript">
+    const retryCount = /*[[${retryCount}]]*/ 0;
+    const replayCount = /*[[${replayCount}]]*/ 0;
+    const successCallCount = /*[[${successfulApiCallCount}]]*/ 0;
+    const failedCount = /*[[${#lists.size(failedCalls)}]]*/ 0;
+
+    console.log("Retry Count:", retryCount);
+    console.log("Replay Count:", replayCount);
+    console.log("Successful API Calls:", successCallCount);
+    console.log("Failed Count:", failedCount);
+
+    const ctx = document.getElementById('retryReplayChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Retries', 'Replays', 'Successful API Calls', 'Failed Calls'],
+            datasets: [{
+                data: [retryCount, replayCount, successCallCount, failedCount],
+                backgroundColor: ['#FF6384', '#36A2EB', '#4CAF50', '#FFCE56'],
+                hoverBackgroundColor: ['#FF6384', '#36A2EB', '#4CAF50', '#FFCE56']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, /* Allow resizing */
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return tooltipItem.label + ': ' + tooltipItem.raw;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const acc = document.querySelectorAll(".accordion");
+    acc.forEach(button => {
+        button.addEventListener("click", function () {
+            this.classList.toggle("active");
+            const panel = this.nextElementSibling;
+            if (panel.style.display === "block") {
+                panel.style.display = "none";
+            } else {
+                panel.style.display = "block";
+            }
+        });
+    });
+
+    const menuButton = document.getElementById("menuButton");
+    const menuPanel = document.getElementById("menuPanel");
+
+    menuButton.addEventListener("click", () => {
+        if (menuPanel.style.display === "block") {
+            menuPanel.style.display = "none";
+        } else {
+            menuPanel.style.display = "block";
+        }
+    });
+
+    window.addEventListener("click", (event) => {
+        if (!menuButton.contains(event.target) && !menuPanel.contains(event.target)) {
+            menuPanel.style.display = "none";
+        }
+    });
+</script>
+</body>
+</html>
