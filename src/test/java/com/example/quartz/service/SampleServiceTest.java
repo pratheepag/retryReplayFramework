@@ -1,6 +1,5 @@
 package com.example.quartz.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doNothing;
 
@@ -12,16 +11,14 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.test.context.TestPropertySource;
 
-@SpringBootTest
-@TestPropertySource(locations = "classpath:application-test.properties")
+@SpringBootTest(properties = {"spring.config.name=application-test"}, classes = {SampleServiceTest.class})
 public class SampleServiceTest {
 
     @Mock
     private SampleService sampleService;
 
-    @Autowired
+    @Mock
     private ReplayService replayService;
 
     private JavaMailSender javaMailSender;
