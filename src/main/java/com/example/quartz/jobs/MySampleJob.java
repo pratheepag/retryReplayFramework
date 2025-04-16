@@ -8,27 +8,31 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.example.quartz.factory.RetryFactory;
+import com.example.quartz.service.RetryService;
 
 @Component
 public class MySampleJob implements Job {
 
   @Autowired
-  private RetryFactory retryFactory;
+  private RetryService retryService;
 
   private static final Logger logger = LoggerFactory.getLogger(MySampleJob.class);
 
-  public void setRetryFactory(RetryFactory retryFactory) {
-    this.retryFactory = retryFactory;
-  }
-
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
-    int retryCount = 0;
+    int retryCount = 1;
     try {
       while (true) {
         try {
-          retryFactory.executeWithRetry(retryCount);
+          if (retryCount <= 3) {
+            retryService.executeFixedIntervalRetry(retryCount);
+          } else if (retryCount <= 6) {
+            retryService.executeExponentialBackoffRetry(retryCount);
+          } else if (retryCount <= 9) {
+            retryService.executeJitterRetry(retryCount);
+          } else {
+            retryService.executeCircuitBreakerRetry(retryCount);
+          }
           break; // Exit loop on success
         } catch (Exception e) {
           retryCount++;
@@ -39,4 +43,9 @@ public class MySampleJob implements Job {
       throw new JobExecutionException("Retry interrupted", e);
     }
   }
+
+  public void setRetryService(RetryService retryService) {
+    this.retryService = retryService;
+  }
+
 }
