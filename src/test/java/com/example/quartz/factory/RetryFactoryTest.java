@@ -57,7 +57,7 @@ class RetryFactoryTest {
             return callback.doWithRetry(null);
         });
 
-        retryFactory.executeWithRetry(2);
+        retryFactory.executeWithRetry(2, "testPayload");
 
         verify(fixedIntervalRetryTemplate, times(1)).execute(any());
     }
@@ -69,7 +69,7 @@ class RetryFactoryTest {
             return callback.doWithRetry(null);
         });
 
-        retryFactory.executeWithRetry(5);
+        retryFactory.executeWithRetry(5, "testPayload");
 
         verify(exponentialBackoffRetryTemplate, times(1)).execute(any());
     }
@@ -77,11 +77,11 @@ class RetryFactoryTest {
     @Test
     void testJitterRetry() throws Exception {
         when(jitterRandom.nextInt(anyInt())).thenReturn(500);
-        doAnswer(invocation -> null).when(sampleService).callExternalApi(); // Mock API call
+        doAnswer(invocation -> null).when(sampleService).callExternalApi("testPayload"); // Mock API call
 
-        retryFactory.executeWithRetry(8);
+        retryFactory.executeWithRetry(8, "testPayload");
 
-        verify(sampleService, times(1)).callExternalApi();
+        verify(sampleService, times(1)).callExternalApi("testPayload");
     }
 
     @Test
@@ -92,7 +92,7 @@ class RetryFactoryTest {
             return supplier.get();
         });
 
-        retryFactory.executeWithRetry(10);
+        retryFactory.executeWithRetry(10, "testPayload");
 
         verify(circuitBreaker, times(1)).executeSupplier(any());
     }
@@ -100,11 +100,11 @@ class RetryFactoryTest {
     @Test
     void testJitterRetryUpToNineAttempts() throws Exception {
         when(jitterRandom.nextInt(anyInt())).thenReturn(500);
-        doAnswer(invocation -> null).when(sampleService).callExternalApi(); // Mock API call
+        doAnswer(invocation -> null).when(sampleService).callExternalApi("testPayload"); // Mock API call
 
-        retryFactory.executeWithRetry(9);
+        retryFactory.executeWithRetry(9, "testPayload");
 
-        verify(sampleService, times(1)).callExternalApi();
+        verify(sampleService, times(1)).callExternalApi("testPayload");
     }
 
     @Test
@@ -115,7 +115,7 @@ class RetryFactoryTest {
             return supplier.get();
         });
 
-        retryFactory.executeWithRetry(10);
+        retryFactory.executeWithRetry(10, "testPayload");
 
         verify(circuitBreaker, times(1)).executeSupplier(any());
     }
@@ -123,7 +123,7 @@ class RetryFactoryTest {
     @Test
     void testCircuitBreakerOpenState() {
         when(circuitBreaker.getState()).thenReturn(CircuitBreaker.State.OPEN);
-        Exception exception = assertThrows(RuntimeException.class, () -> retryFactory.executeWithRetry(10));
+        Exception exception = assertThrows(RuntimeException.class, () -> retryFactory.executeWithRetry(10, "testPayload"));
         assertEquals("Circuit Breaker is open. Stopping retries.", exception.getMessage());
     }
 }

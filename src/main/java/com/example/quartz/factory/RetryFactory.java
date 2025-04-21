@@ -44,17 +44,21 @@ public class RetryFactory {
         this.delayHandler = delayHandler;
     }
 
-    public void executeWithRetry(int retryCount) throws Exception {
+    public void executeWithRetry(int retryCount, String payload) throws Exception {
         if (retryCount <= 3) {
             // Use Fixed Interval Retry for attempts up to 3
+            logger.info("Executing Fixed Interval Retry with payload: " + payload + " and retry count: " + retryCount);
+
             fixedIntervalRetryTemplate.execute(retryContext -> {
-                sampleService.callExternalApi();
+                sampleService.callExternalApi(payload);
                 return null;
             });
         } else if (retryCount <= 6) {
             // Use Exponential Backoff Retry for attempts 4 to 6
+            logger.info("Executing Exponential Backoff Retry with payload: " + payload + " and retry count: " + retryCount);
+
             exponentialBackoffRetryTemplate.execute(retryContext -> {
-                sampleService.callExternalApi();
+                sampleService.callExternalApi(payload);
                 return null;
             });
         } else if (retryCount <= 9) {
@@ -62,15 +66,17 @@ public class RetryFactory {
             long delay = (long) (Math.pow(2, retryCount) * 1000 + jitterRandom.nextInt(1000));
             logger.info("Retrying in " + delay + "ms (Attempt " + retryCount + ") with Jitter");
             delayHandler.run(); // Use the delay handler
-            sampleService.callExternalApi();
+            sampleService.callExternalApi(payload);
         } else {
             // Use Circuit Breaker for attempts beyond 9
             if (circuitBreaker.getState() == CircuitBreaker.State.OPEN) {
                 logger.error("Circuit Breaker is open. Closing connection and stopping retries.");
                 throw new RuntimeException("Circuit Breaker is open. Stopping retries.");
             }
+            logger.info("Executing Circuit Breaker Retry with payload: " + payload + " and retry count: " + retryCount);
+
             circuitBreaker.executeSupplier(() -> {
-                sampleService.callExternalApi();
+                sampleService.callExternalApi(payload);
                 return null;
             });
         }
